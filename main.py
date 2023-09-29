@@ -256,7 +256,7 @@ def scrape_images():
 
 def main():
     os.system("cls")
-    print("Super-Nova | Scraper".center(os.get_terminal_size().columns))
+    print("{ Super-Nova | Scraper } ".center(os.get_terminal_size().columns))
     print("1 - [ Image Scraper ]".center(os.get_terminal_size().columns))
     print("2 - [ Proxy Scraper ]".center(os.get_terminal_size().columns))
     inputed = int(console.input())

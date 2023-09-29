@@ -182,10 +182,10 @@ def task():
 
     scraper = Scraper("4c672d35-0701-42b2-88c3-78380b0db560","discord.com")
     success = scraper.get_c()
-    if success == False:
+    if not success:
         return
     challenge = scraper.get_challenge()
-    if challenge == False or "tasklist" not in challenge:
+    if not challenge or "tasklist" not in challenge:
         return
     
     tasklist       = challenge['tasklist']

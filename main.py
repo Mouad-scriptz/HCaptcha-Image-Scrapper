@@ -192,15 +192,15 @@ def task():
     challenge_type = challenge['request_type']
     question       = challenge["requester_question"]["en"]
     folder_name    = question.lower().replace(".","")
-
+    folder_path    = f"images/{challenge_type}/{folder_name}"
     if challenge_type not in os.listdir("images"):
         os.mkdir("images/"+challenge_type)
 
     if folder_name not in os.listdir(f"images/{challenge_type}"):
-        os.mkdir(f"images/{challenge_type}/{folder_name}")
+        os.mkdir(folder_path)
 
-    def download_image(image_url, challenge_type):
-        folder = os.listdir(f"images/{challenge_type}/{folder_name}/")
+    def download_image(image_url, challenge_type, folder_path):
+        folder = os.listdir(folder_path)
         headers = {
             'authority'          : 'imgs.hcaptcha.com',
             'accept'             : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
@@ -225,7 +225,7 @@ def task():
                 if image_name not in folder:
                     break
         try:
-            f = open(f"images/{challenge_type}/{folder_name}/{image_name}.jpg","wb")
+            f = open(f"folder_path/{image_name}.jpg","wb")
             f.write(image)
             f.close()
         except:

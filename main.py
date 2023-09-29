@@ -177,76 +177,82 @@ class Scraper():
             return response.json()
         except:
             return False
-        
+def task():
+    start = time.time()
+
+    scraper = Scraper("4c672d35-0701-42b2-88c3-78380b0db560","discord.com")
+    success = scraper.get_c()
+    if success == False:
+        return
+    challenge = scraper.get_challenge()
+    if challenge == False or "tasklist" not in challenge:
+        return
+    
+    tasklist       = challenge['tasklist']
+    challenge_type = challenge['request_type']
+    question       = challenge["requester_question"]["en"]
+    folder_name    = question.lower().replace(".","")
+
+    if challenge_type not in os.listdir("images"):
+        os.mkdir("images/"+challenge_type)
+
+    if folder_name not in os.listdir(f"images/{challenge_type}"):
+        os.mkdir(f"images/{challenge_type}/{folder_name}")
+
+    def download_image(image_url, challenge_type):
+        folder = os.listdir(f"images/{challenge_type}/{folder_name}/")
+        headers = {
+            'authority'          : 'imgs.hcaptcha.com',
+            'accept'             : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'accept-language'    : accept_language,
+            'referer'            : 'https://newassets.hcaptcha.com/',
+            'sec-ch-ua'          : sec_ch_ua,
+            'sec-ch-ua-mobile'   : '?0',
+            'sec-ch-ua-platform' : '"Windows"',
+            'sec-fetch-dest'     : 'image',
+            'sec-fetch-mode'     : 'no-cors',
+            'sec-fetch-site'     : 'same-site',
+            'user-agent'         : user_agent
+        }
+        image = httpx.get(image_url, headers=headers).content
+        if challenge_type == "image_label_binary":
+            image_name = hashlib.md5(image).hexdigest()
+            if image_name in folder:
+                return
+        else:
+            while True:
+                image_name = ''.join(random.choice(string.digits+string.ascii_letters) for _ in range(20))
+                if image_name not in folder:
+                    break
+        try:
+            f = open(f"images/{challenge_type}/{folder_name}/{image_name}.jpg","wb")
+            f.write(image)
+            f.close()
+        except:
+            pass
+    threads = []
+    for task in tasklist:
+        thread = threading.Thread(
+            target = download_image, 
+            args   = (task["datapoint_uri"],challenge_type)
+        )
+        threads.append(thread)
+        thread.start()
+    for t in threads:
+        t.join()
+    with open_lock:
+        with open("questions.txt", "a+") as f:
+            f.seek(0)
+            if question not in f.read():
+                f.write(question + "\n")
+            f.close()
+    console.success(
+        "Label", f"{folder_name} | {colors.lblue}Images{colors.reset}: {len(tasklist)} | {colors.cyan}Total{colors.reset}: {len(os.listdir(f'images/{challenge_type}/{folder_name}'))} | {colors.magenta}{round(time.time()-start)}{colors.reset}s"
+    )
+
 def thread():
     while True:
-        start = time.time()
-
-        scraper = Scraper("4c672d35-0701-42b2-88c3-78380b0db560","discord.com")
-        success = scraper.get_c()
-        if success == False:
-            return
-        challenge = scraper.get_challenge()
-        if challenge == False:
-            return
-        tasklist       = challenge['tasklist']
-        challenge_type = challenge['request_type']
-        question       = challenge["requester_question"]["en"]
-        folder_name    = question.lower().replace(".","")
-
-        if folder_name not in os.listdir(f"images/{challenge_type}"):
-            os.mkdir(f"images/{challenge_type}/{folder_name}")
-
-        def download_image(image_url, challenge_type):
-            folder = os.listdir(f"images/{challenge_type}/{folder_name}/")
-            headers = {
-                'authority'          : 'imgs.hcaptcha.com',
-                'accept'             : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-                'accept-language'    : accept_language,
-                'referer'            : 'https://newassets.hcaptcha.com/',
-                'sec-ch-ua'          : sec_ch_ua,
-                'sec-ch-ua-mobile'   : '?0',
-                'sec-ch-ua-platform' : '"Windows"',
-                'sec-fetch-dest'     : 'image',
-                'sec-fetch-mode'     : 'no-cors',
-                'sec-fetch-site'     : 'same-site',
-                'user-agent'         : user_agent
-            }
-            image = httpx.get(image_url, headers=headers).content
-            if challenge_type == "image_label_binary":
-                image_name = hashlib.md5(image).hexdigest()
-                if image_name in folder:
-                    return
-            else:
-                while True:
-                    image_name = ''.join(random.choice(string.digits+string.ascii_letters) for _ in range(20))
-                    if image_name not in folder:
-                        break
-            try:
-                f = open(f"images/{folder_name}/{image_name}.jpg","wb")
-                f.write(image)
-                f.close()
-            except:
-                pass
-        threads = []
-        for task in tasklist:
-            thread = threading.Thread(
-                target = download_image, 
-                args   = (task["datapoint_uri"],challenge_type)
-            )
-            threads.append(thread)
-            thread.start()
-        for t in threads:
-            t.join()
-        with open_lock:
-            with open("questions.txt", "a+") as f:
-                f.seek(0)
-                if question not in f.read():
-                    f.write(question + "\n")
-                f.close()
-        console.success(
-            "Label", f"{folder_name} | {colors.lblue}Images{colors.reset}: {len(tasklist)} | {colors.cyan}Total{colors.reset}: {len(os.listdir(f'images/{folder_name}'))} | {colors.magenta}{round(time.time()-start)}{colors.reset}s"
-        )
+        task()
 
 def scrape_images():
     threads = int(console.input("Threads"))

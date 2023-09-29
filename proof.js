@@ -1,3 +1,5 @@
+// https://github.com/xtekky/Discord-Hcaptcha-Solver
+
 const fs      = require('fs')
 const { JSDOM, ResourceLoader } = require("jsdom");
 

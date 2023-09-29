@@ -1,22 +1,28 @@
-import jwt, hashlib, math, time, random, os, threading, tls_client, requests, os
-from python_ghost_cursor import path
-from datetime import datetime
-from json import dumps
-from colorama import Fore, init, Style
+import hashlib, time, random, os, threading, tls_client, requests, os, subprocess, json, string, httpx
+from colorama import Fore, init
+
 init(convert=True,autoreset=True)
-print_lock = threading.Lock()
+os.system("cls")
+print_lock      = threading.Lock()
+open_lock       = threading.Lock()
+v               = tls_client.Session(client_identifier="chrome_111").get("https://js.hcaptcha.com/1/api.js").text.split('nt="')[1].split('"')[0]
+accept_language = 'en-GB,en;q=0.9'
+sec_ch_ua       = '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+user_agent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+
 def print_wl(text):
-    print_lock.acquire()
-    print(text)
-    print_lock.release()
+    with print_lock:
+        print(text)
+
 class colors:
-    reset = Fore.RESET
-    cyan = Fore.CYAN
+    reset   = Fore.RESET
+    cyan    = Fore.CYAN
     magenta = Fore.MAGENTA
-    yellow = Fore.YELLOW; lyellow = Fore.LIGHTYELLOW_EX
-    red = Fore.RED; lred = Fore.LIGHTRED_EX
-    blue = Fore.BLUE; lblue = Fore.LIGHTBLUE_EX
-    green = Fore.GREEN; lgreen = Fore.LIGHTGREEN_EX
+    yellow  = Fore.YELLOW; lyellow = Fore.LIGHTYELLOW_EX
+    red     = Fore.RED;    lred    = Fore.LIGHTRED_EX
+    blue    = Fore.BLUE;   lblue   = Fore.LIGHTBLUE_EX
+    green   = Fore.GREEN;  lgreen  = Fore.LIGHTGREEN_EX
+
 class console:
     def input(text:str=None):
         content = input(
@@ -39,6 +45,7 @@ class console:
         print_wl(
             f"({colors.lyellow}~{colors.reset}) {colors.lyellow}{text}{colors.reset}{': '+content if content else ''}"
         )
+
 def scrape_proxies():
     os.system("cls")
     urls_to_scrape=[
@@ -56,177 +63,196 @@ def scrape_proxies():
         console.success("Scraped",f"{i} | {num}")
     time.sleep(1)
     main()
-def generate_hsl(req):
-    x = "0123456789/:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    req = jwt.decode(req,options={"verify_signature":False})
-    def a(r):
-        for t in range(len(r) - 1, -1, -1):
-            if r[t] < len(x) - 1:
-                r[t] += 1
-                return True
-            r[t] = 0
-        return False
-    def i(r):
-        t = ""
-        for n in range(len(r)):
-            t += x[r[n]]
-        return t
-    def o(r, e):
-        n = e
-        hashed = hashlib.sha1(e.encode())
-        o = hashed.hexdigest()
-        t = hashed.digest()
-        e = None
-        n = -1
-        o = []
-        for n in range(n + 1, 8 * len(t)):
-            e = t[math.floor(n / 8)] >> n % 8 & 1
-            o.append(e)
-        a = o[:r]
-        def index2(x,y):
-            if y in x:
-                return x.index(y)
-            return -1
-        return 0 == a[0] and index2(a, 1) >= r - 1 or -1 == index2(a, 1)
-    def get():
-        for e in range(25):
-            n = [0 for i in range(e)]
-            while a(n):
-                u = req["d"] + "::" + i(n)
-                if o(req["s"], u):
-                    return i(n)
-    result = get()
-    hsl = ":".join([
-        "1",
-        str(req["s"]),
-        datetime.now().isoformat()[:19] \
-            .replace("T", "") \
-            .replace("-", "") \
-            .replace(":", ""),
-        req["d"],
-        "",
-        result
-    ])
-    return hsl
+
 def get_proxy():
     while True:
         with open("proxies.txt","r") as f:
             proxy = random.choice(f.read().splitlines())
             f.close()
-            if not proxy == "" or proxy == "\n":
+            if proxy != "" and proxy != "\n":
                break 
     return proxy
-def scrape_images():
-    os.system("cls")
-    v = tls_client.Session(client_identifier="chrome_111").get("https://js.hcaptcha.com/1/api.js").text.split('nt="')[1].split('"')[0]
-    class Scrapper():
-        def __init__(self, site_key: str, host: str):
-            self.sk = site_key
-            self.host = host 
-            self.session = tls_client.Session(client_identifier="chrome_111",random_tls_extension_order=True)
-            self.session.headers={
-                'authority': 'hcaptcha.com',
-                'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
-            }
-            self.proxy = get_proxy()
-            self.session.proxies={
-                "http": "http://"+self.proxy,
-                "https": "http://"+self.proxy,
-            }
-        def get_c(self):
-            headers = {
-                'accept': 'application/json',
-                'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,ar;q=0.7',
-                'cache-control': 'no-cache',
-                'content-type': 'text/plain',
-                'origin': 'https://newassets.hcaptcha.com',
-                'pragma': 'no-cache',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-site',
-            }
-            params = {'v':v,'host':self.host,'sitekey':self.sk,'sc':'1','swa':'1'}
-            r = self.session.post('https://hcaptcha.com/checksiteconfig',params=params,headers=headers,timeout_seconds=10)
-            c = r.json()["c"]
-            c["type"] = "hsl"
-            return c
-        def get_captcha(self,c,hsl):
-            headers = {
-                'accept': 'application/json',
-                'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,ar;q=0.7',
-                'cache-control': 'no-cache',
-                'content-type': 'application/x-www-form-urlencoded',
-                'origin': 'https://newassets.hcaptcha.com',
-                'pragma': 'no-cache',
-                'referer': 'https://newassets.hcaptcha.com/',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-site',
-            }
-            start = {'x': 100, 'y': 100}
-            end = {'x': 600, 'y': 700}
-            timestamp = int((time.time() * 1000) + round(random.random() * (120 - 30) + 30))
-            mm = [[int(p['x']), int(p['y']), int(time.time() * 1000) + round(random.random() * (5000 - 2000) + 2000)] for p in path(start, end)]
-            payload = {
-                "v": v,
-                "sitekey": self.sk,
-                "host": self.host,
-                "hl": "en",
-                "motionData": dumps({"st":timestamp,"dct":timestamp,"mm":mm},separators=(",",":")),
-                "n": hsl,
-                "c": dumps(c,separators=(",",":"))
-            }
-            r = self.session.post(f'https://hcaptcha.com/getcaptcha/{self.sk}',headers=headers,data=payload,timeout_seconds=10)
-            return r.json()
-        def scrape_challenges(self):
-            while True:
-                try:
-                    start = time.time()
-                    c = self.get_c()
-                    captcha_data = self.get_captcha(c,generate_hsl(c["req"]))
-                    question = captcha_data["requester_question"]["en"]
-                    folder_name = question.replace("Please click each image containing ","")
-                    if not folder_name in os.listdir("images"):
-                        os.mkdir(f"images/{folder_name}")
 
-                    def download_n_save(image_url):
+class Scraper():
+    def __init__(self, site_key: str, host: str):
+        self.site_key = site_key
+        self.host     = host 
+        self.session  = tls_client.Session(
+            "chrome_"+user_agent.split("Chrome/")[1].split(".")[0],
+            random_tls_extension_order=True
+        )
+        self.session.headers = {
+            'authority'       : 'hcaptcha.com',
+            'accept-language' : accept_language,
+            'sec-ch-ua'       : sec_ch_ua,
+            'user-agent'      : user_agent
+        }
+        self.proxy = get_proxy()
+        self.session.proxies = {
+            "http"  : "http://"+self.proxy,
+            "https" : "http://"+self.proxy,
+        }
     
-                        image = requests.get(image_url).content
-                        image_name = hashlib.md5(image).hexdigest()
-                        if not image_name in os.listdir(f"images/{folder_name}/"):
-                            f = open(f"images/{folder_name}/{image_name}.jpg","wb")
-                            f.write(image)
-                            f.close()
-                        else:
-                            console.info("Detected duplicate",image_name)
+    def get_c(self):
+        headers = {
+            'accept'             : 'application/json',
+            'content-type'       : 'text/plain',
+            'origin'             : 'https://newassets.hcaptcha.com',
+            'sec-ch-ua-mobile'   : '?0',
+            'sec-ch-ua-platform' : '"Windows"',
+            'sec-fetch-dest'     : 'empty',
+            'sec-fetch-mode'     : 'cors',
+            'sec-fetch-site'     : 'same-site'
+        }
+        params = {
+            'v'       : v,
+            'host'    : self.host,
+            'sitekey' : self.site_key,
+            'sc'      : '1',
+            'swa'     : '1',
+            'spst'    : '1'
+        }
+        try:
+            response = self.session.post('https://hcaptcha.com/checksiteconfig',params=params,headers=headers,timeout_seconds=10)
+            self.c = response.json()["c"]
+            return True
+        except:
+            return False
+        
+    def get_challenge(self):
+        headers = {
+            'accept'             : 'application/json',
+            'content-type'       : 'application/x-www-form-urlencoded',
+            'origin'             : 'https://newassets.hcaptcha.com',
+            'referer'            : 'https://newassets.hcaptcha.com/',
+            'sec-ch-ua-mobile'   : '?0',
+            'sec-ch-ua-platform' : '"Windows"',
+            'sec-fetch-dest'     : 'empty',
+            'sec-fetch-mode'     : 'cors',
+            'sec-fetch-site'     : 'same-site'
+        }
+        widget_id = '0'+''.join(random.choice("0123456789") for _ in range(11))
+        now = int(time.time()*1000)
+        payload = {
+            "v"          : v,
+            "sitekey"    : self.site_key,
+            "host"       : self.host,
+            "hl"         : "en",
+            "motionData" : {
+                "st":now,
+                "mm":[[160,3,1696008726528],[152,8,1696008726544],[146,12,1696008726560],[139,16,1696008726576],[131,21,1696008726592],[121,27,1696008726608],[111,32,1696008726624],[101,36,1696008726640],[93,39,1696008726656],[87,41,1696008726672],[85,42,1696008726688]],
+                "mm-mp":8,
+                "md":[[85,42,1696008726729]],
+                "md-mp":0,
+                "mu":[[85,42,1696008726856]],
+                "mu-mp":0,
+                "v":1,
+                "topLevel":{
+                    "inv":False,
+                    "st":now+random.randint(10,100),
+                    "sc":{"availWidth":1600,"availHeight":900,"width":1600,"height":900,"colorDepth":24,"pixelDepth":24,"availLeft":0,"availTop":0,"onchange":None,"isExtended":False},
+                    "nv":{"vendorSub":"","productSub":"20030107","vendor":"Google Inc.","maxTouchPoints":0,"scheduling":{},"userActivation":{},"doNotTrack":None,"geolocation":{},"connection":{},"pdfViewerEnabled":True,"webkitTemporaryStorage":{},"hardwareConcurrency":random.choice([4,8,16]),"cookieEnabled":True,"appCodeName":"Mozilla","appName":"Netscape","appVersion":user_agent.replace("Mozilla/",""),"platform":"Win32","product":"Gecko","userAgent":user_agent,"language":"en-GB","languages":["en-GB","en"],"onLine":True,"webdriver":False,"bluetooth":{},"clipboard":{},"credentials":{},"keyboard":{},"managed":{},"mediaDevices":{},"storage":{},"serviceWorker":{},"virtualKeyboard":{},"wakeLock":{},"deviceMemory":8,"ink":{},"hid":{},"locks":{},"gpu":{},"mediaCapabilities":{},"mediaSession":{},"permissions":{},"presentation":{},"usb":{},"xr":{},"serial":{},"windowControlsOverlay":{},"userAgentData":{"brands":[{"brand":"Google Chrome","version":"117"},{"brand":"Not;A=Brand","version":"8"},{"brand":"Chromium","version":"117"}],"mobile":False,"platform":"Windows"},"plugins":["internal-pdf-viewer","internal-pdf-viewer","internal-pdf-viewer","internal-pdf-viewer","internal-pdf-viewer"]},
+                    "dr":"",
+                    "exec":False,
+                    "wn":[],
+                    "wn-mp":5869,
+                    "xy":[],
+                    "xy-mp":0,
+                    "mm":[[669,157,1696008726280],[634,172,1696008726296],[591,185,1696008726312],[522,202,1696008726335],[476,214,1696008726351],[432,223,1696008726368],[394,227,1696008726384],[359,227,1696008726400],[328,227,1696008726416],[299,227,1696008726432],[263,227,1696008726456],[242,230,1696008726472],[216,237,1696008726495],[203,244,1696008726511]],
+                    "mm-mp":7.709677419354839
+                },
+                "session":[],
+                "widgetList":[widget_id],
+                "widgetId":widget_id,
+                "href":"https://discord.com",
+                "prev":{"escaped":False,"passed":False,"expiredChallenge":False,"expiredResponse":False}
+            },
+            "pdc"        : json.dumps({"s":now,"n":0,"p":1,"gcs":random.randint(100,200)},separators=(",",":")),
+            "pst"        : False,
+            "n"          : subprocess.check_output(["node", './proof.js', self.c['req'], user_agent]).decode().strip(),
+            "c"          : json.dumps(self.c,separators=(",",":"))
+        }
+        try:
+            response = self.session.post(f'https://hcaptcha.com/getcaptcha/{self.site_key}',headers=headers,data=payload,timeout_seconds=10)
+            return response.json()
+        except:
+            return False
+        
+def thread():
+    while True:
+        start = time.time()
 
+        scraper = Scraper("4c672d35-0701-42b2-88c3-78380b0db560","discord.com")
+        success = scraper.get_c()
+        if success == False:
+            return
+        challenge = scraper.get_challenge()
+        if challenge == False:
+            return
+        tasklist       = challenge['tasklist']
+        challenge_type = challenge['request_type']
+        question       = challenge["requester_question"]["en"]
+        folder_name    = question.lower().replace(".","")
 
-                    threads = []
-                    for i in captcha_data["tasklist"]:
-                        thread = threading.Thread(target=download_n_save, args=(i["datapoint_uri"],))
-                        threads.append(thread)
-                        thread.start()
-                    for t in threads:
-                        t.join()
+        if folder_name not in os.listdir(f"images/{challenge_type}"):
+            os.mkdir(f"images/{challenge_type}/{folder_name}")
 
-                    with open("questions.txt", "a+") as f:
-                        f.seek(0)
-                        if question not in f.read():
-                            f.write(question + "\n")
-                        f.close()
-                    console.success(
-                        "Label", f"{folder_name} | {colors.lblue}Images{colors.reset}: {len(captcha_data['tasklist'])} | {colors.cyan}Total{colors.reset}: {len(os.listdir(f'images/{folder_name}'))} | {colors.lblue}{self.proxy}{colors.reset} | {colors.magenta}{round(time.time()-start)}{colors.reset}s"
-                    )
-                except:
-                    pass
-    threads = range(int(console.input("Threads")))
-    for _ in threads:
-        threading.Thread(target=Scrapper("4c672d35-0701-42b2-88c3-78380b0db560","discord.com").scrape_challenges).start()
+        def download_image(image_url, challenge_type):
+            folder = os.listdir(f"images/{challenge_type}/{folder_name}/")
+            headers = {
+                'authority'          : 'imgs.hcaptcha.com',
+                'accept'             : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                'accept-language'    : accept_language,
+                'referer'            : 'https://newassets.hcaptcha.com/',
+                'sec-ch-ua'          : sec_ch_ua,
+                'sec-ch-ua-mobile'   : '?0',
+                'sec-ch-ua-platform' : '"Windows"',
+                'sec-fetch-dest'     : 'image',
+                'sec-fetch-mode'     : 'no-cors',
+                'sec-fetch-site'     : 'same-site',
+                'user-agent'         : user_agent
+            }
+            image = httpx.get(image_url, headers=headers).content
+            if challenge_type == "image_label_binary":
+                image_name = hashlib.md5(image).hexdigest()
+                if image_name in folder:
+                    return
+            else:
+                while True:
+                    image_name = ''.join(random.choice(string.digits+string.ascii_letters) for _ in range(20))
+                    if image_name not in folder:
+                        break
+            try:
+                f = open(f"images/{folder_name}/{image_name}.jpg","wb")
+                f.write(image)
+                f.close()
+            except:
+                pass
+        threads = []
+        for task in tasklist:
+            thread = threading.Thread(
+                target = download_image, 
+                args   = (task["datapoint_uri"],challenge_type)
+            )
+            threads.append(thread)
+            thread.start()
+        for t in threads:
+            t.join()
+        with open_lock:
+            with open("questions.txt", "a+") as f:
+                f.seek(0)
+                if question not in f.read():
+                    f.write(question + "\n")
+                f.close()
+        console.success(
+            "Label", f"{folder_name} | {colors.lblue}Images{colors.reset}: {len(tasklist)} | {colors.cyan}Total{colors.reset}: {len(os.listdir(f'images/{folder_name}'))} | {colors.magenta}{round(time.time()-start)}{colors.reset}s"
+        )
+
+def scrape_images():
+    threads = int(console.input("Threads"))
+    for i in range(threads):
+        threading.Thread(target=thread).start()
+        console.info("Started thread",str(i+1))
 
 def main():
     os.system("cls")
@@ -243,6 +269,7 @@ def main():
         if open("proxies.txt").read() == "<# Free proxies work. #>":
             print("(-) No proxies detected in proxies.txt")
             input("(#) Press ENTER to continue.")
+            main()
     else:
         print("(-) Invalid input.")
         input("(#) Press ENTER to return.")
